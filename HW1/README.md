@@ -1,4 +1,10 @@
+[TOC]
+
 # HOMEWORK 1: Exercises for Monte Carlo Methods
+
+**16340232 王泽浩**
+
+github repo：https://github.com/hansenbeast/2019-SYSU-DM/tree/master/HW1
 
 ## Exercise 1
 
@@ -67,8 +73,7 @@ ylabel('the variance of estimated value of pi');
 
 1. 随着投点的次数增加，方差在减少，圆周率 $\pi$ 计算的准确率在增加
 2. 但当次数达到一定规模时，准确率精度增加在减缓，其原因是生成的随机数是伪随机的，这也是蒙特卡洛算法达不到祖冲之求圆周率精度的内在原因
-
-
+3. 当采样点的个数达到 50000 时，经实验证明，pi 的均值会在 3.141 左右。 
 
 
 
@@ -87,7 +92,7 @@ $$
 
 ![7](Assets/7.jpg)
 
-[参考](http://www.scratchapixel.com/lessons/mathematics-physics-for-computer-graphics/monte-carlo-methods-in-practice/monte-carlo-integration)
+> 参考：http://www.scratchapixel.com/lessons/mathematics-physics-for-computer-graphics/monte-carlo-methods-in-practice/monte-carlo-integration
 
 ![8](Assets/8.jpg)
 
@@ -101,7 +106,11 @@ $$
 
 **可以使用 matlab 中的 rand 产生随机分布的采样点**
 
+![7](Assets/14.jpg)
 
+![7](Assets/13.jpg)
+
+在函数图像上直观的理解就是，求积分区间中均匀分布的采样点所形成不同矩形面积的均值，即近似为连续函数的积分。
 
 ```matlab
 clear;
@@ -156,13 +165,8 @@ ylabel('the variance of estimated value of integrate');
 | 80       | 0.250091736260338 | 0.00124772108843291  |
 | 100      | 0.252201478522939 | 0.000992651575872455 |
 
-![7](Assets/14.jpg)
-
-![7](Assets/13.jpg)
-
-
-
-1. 随着采样次数增加，方差在减少，并逐渐接近真实值 1/4。
+1. 随着采样次数增加，结果会逐渐接近真实值 1/4 ，但方差在减少。
+2. 之所以在采样次数较少的情况下，结果有时也会接近真实值的原因在于程序产生的是伪随机数。
 
 
 
@@ -183,7 +187,9 @@ ylabel('the variance of estimated value of integrate');
  y_cor = rand(1) * 2 - 1;
 ```
 
-注意 pdf 发生变化，为 $\frac{1}{(4-2)*(1-(-1)}​$
+注意 pdf 发生变化，为 $\frac{1}{(4-2)*(1-(-1)}$
+
+**即在三维坐标系中，求立方体的平均体积，近似为二重积分。其中立方体的底面积为 4 ，高为在 x 和 y 积分区间均匀分布的采样点得到的连续函数值。**
 
 ```matlab
 clear;
@@ -242,6 +248,27 @@ ylabel('the variance of estimated value of integrate');
 
 
 
+使用 python 的 scipy 库可以计算二重积分
+
+```python
+import numpy as np  
+import math
+from scipy.integrate import dblquad
+
+def fun(y,x):
+    return (y*y * math.exp(-y*y) + x*x*x*x * math.exp(-x*x)) / (x * math.exp(-x*x))
+
+# print(fun(1,4))
+#二重积分
+val2,err2=dblquad(fun,2,4,lambda x:-1,lambda x:1)
+print ('二重积分结果：',val2)
+print('二重积分绝对误差的估计值',err2)
+```
+
+二重积分结果： 112958.6199895223
+二重积分绝对误差的估计值 0.0014382408930888665
 
 
-### 
+
+1. 通过表中结果，发现随着采样次数的增加，结果会逐渐接近真实值。
+2. 100次测试样本的方差在不断减少。

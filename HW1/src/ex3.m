@@ -19,6 +19,8 @@ for num = sample_num
     cal_integrate_var = [cal_integrate_var var(cal_integrate)];
 end
 
+% fun = @(x,y) (y.^2 .* exp(-y.^2) + x.^4 .* exp(-x.^2)) / (x .* exp(-x.^2));
+% q = integral2(fun,2,4,@(x)-1,@(x)1);
 % subplot(2,1,1);
 plot(sample_num,cal_integrate_mean);
 title('Adopt the Monte Carlo method to calculate the integrate of f(x)');
