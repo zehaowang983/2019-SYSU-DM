@@ -1,0 +1,1 @@
+python test.py ./datasets/handdraw/* --checkpointDir checkpoints_face --maskType right --batchSize 64 --lam1 100 --lam2 1 --lr 0.001 --nIter 1000 --outDir results_handdraw_face 
