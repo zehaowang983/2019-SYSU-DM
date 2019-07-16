@@ -1,10 +1,6 @@
 # Original Version: Taehoon Kim (http://carpedm20.github.io)
 #   + Source: https://github.com/carpedm20/DCGAN-tensorflow/blob/e30539fb5e20d5a0fed40935853da97e9e55eee8/model.py
 #   + License: MIT
-# [2016-08-05] Modifications for Completion: Brandon Amos (http://bamos.github.io)
-#   + License: MIT
-# [2017-07] Modifications for sText2Image: Shangzhe Wu
-#   + License: MIT
 
 from __future__ import division
 import os
@@ -17,8 +13,6 @@ from scipy.stats import entropy
 
 from ops import *
 from utils import *
-
-#import pdb
 
 class GAN(object):
     def __init__(self, sess, image_size=64, is_crop=False,
@@ -106,13 +100,6 @@ class GAN(object):
             tf.nn.sigmoid_cross_entropy_with_logits(logits=self.D_logits_fk,
                                                     labels=tf.zeros_like(self.D_fk)))
 
-        '''
-        # least square loss
-        self.d_loss_real = 0.5 * tf.reduce_mean((self.D_logits_rl - tf.ones_like(self.D_logits_rl))**2)
-        self.d_loss_fake = 0.5 * tf.reduce_mean((self.D_logits_fk - tf.zeros_like(self.D_logits_fk))**2)
-        self.g_loss = 0.5 * tf.reduce_mean((self.D_logits_fk - tf.ones_like(self.D_logits_fk))**2)
-        '''
-
         self.d_loss_real_sum = tf.summary.scalar("d_loss_real", self.d_loss_real)
         self.d_loss_fake_sum = tf.summary.scalar("d_loss_fake", self.d_loss_fake)
 
@@ -130,11 +117,6 @@ class GAN(object):
 
         # mask to generate
         self.mask = tf.placeholder(tf.float32, [None] + self.image_shape, name='mask')
-        
-        # l1
-        #self.contextual_loss = tf.reduce_sum(
-        #    tf.contrib.layers.flatten(
-        #        tf.abs(tf.mul(self.mask, self.G) - tf.mul(self.mask, self.images))), 1)
         
         # kl divergence
         self.contextual_loss = kl_divergence(
@@ -223,17 +205,6 @@ Initializing a new one.
                 batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]) \
                             .astype(np.float32)
                 
-                '''
-                # randomly select wrong images
-                idx_wr = np.random.randint(batch_idxs)
-                while (idx_wr == idx):
-                    idx_wr = np.random.randint(batch_idxs)
-
-                batch_files_wr = image_data[idx_wr*config.batch_size:(idx_wr+1)*config.batch_size]
-                batch_wr = [get_image(batch_file_wr, self.image_size, is_crop=self.is_crop)
-                         for batch_file_wr in batch_files_wr]
-                batch_images_wr = np.array(batch_wr).astype(np.float32)
-                '''
                 data_time = time.time() - data_start_time
 
                 #-------- data loading --------#
@@ -259,6 +230,7 @@ Initializing a new one.
                 errD_fake = self.d_loss_fake.eval({self.z: batch_z})
                 errD_real = self.d_loss_real.eval({self.images: batch_images})
                 errG = self.g_loss.eval({self.z: batch_z})
+
                 #-------- training --------#
 
                 counter += 1
@@ -271,7 +243,6 @@ Initializing a new one.
                         [self.sampler], feed_dict={self.z: sample_z})
                     save_images(samples[0], [nRows, nCols],
                                 os.path.join(self.sample_dir, 'train_{:02d}_{:04d}.png'.format(epoch, idx)))
-                    #print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss))
 
                 if np.mod(counter, self.save_freq) == 2:
                     self.save(config.checkpoint_dir, counter)
@@ -403,173 +374,6 @@ Initializing a new one.
                     
             #-------- completion --------#
 
-
-            #++++++++ interpolation visualization ++++++++#
-            
-            zhats_final = np.copy(zhats)
-            diff = zhats_final - zhats_init
-            step = 5
-            for i in xrange(step):
-                z_ = zhats_init + diff / (step-1) * i
-                G_imgs = self.sess.run([self.G], feed_dict={ self.z: z_})
-                imgName = os.path.join(config.outDir, 'hats_imgs_{:04d}/{:01d}_interp.png'.format(idx, i))
-                save_images(G_imgs[0][:batchSz,:,:,:], [nRows,nCols], imgName)
-                
-            #-------- interpolation visualization --------#
-
-    def evaluation(self, config):
-        tf.initialize_all_variables().run()
-
-        isLoaded = self.load(self.checkpoint_dir)
-        assert(isLoaded)
-
-        # image_data = glob(os.path.join(config.dataset, "*.png"))
-        nImgs = len(config.imgs)
-
-        batch_idxs = int(np.ceil(nImgs/self.batch_size))
-        if config.maskType == 'right':
-            mask = np.ones(self.image_shape)
-            mask[:,self.image_size:,:] = 0.0
-        elif config.maskType == 'left':
-            mask = np.ones(self.image_shape)
-            mask[:,:self.image_size,:] = 0.0
-        else:
-            assert(False)
-        
-        os.makedirs(os.path.join(config.outDir))
-        va_f = open(os.path.join(config.outDir, 'va.txt'), 'w')
-        va_f.write('verification accurancy:')
-        total_val = 0
-    
-        num_batch = int(np.ceil(nImgs/self.batch_size))
-        for idx in xrange(0, num_batch):
-            print('batch no. ' + str(idx+1) + ':\n')
-            
-            l = idx*self.batch_size
-            u = min((idx+1)*self.batch_size, nImgs)
-            batchSz = u-l
-            batch_files = config.imgs[l:u]
-            batch = [get_image(batch_file, self.image_size, is_crop=self.is_crop)
-                     for batch_file in batch_files]
-            batch_images = np.array(batch).astype(np.float32)
-            batch_mask = np.resize(mask, [self.batch_size] + self.image_shape)
-            
-            # os.makedirs(os.path.join(config.outDir, 'hats_imgs_{:04d}'.format(idx)))
-            # os.makedirs(os.path.join(config.outDir, 'completed_{:04d}'.format(idx)))
-            
-            # last batch
-            if batchSz < self.batch_size:
-                print(batchSz)
-                padSz = ((0, int(self.batch_size-batchSz)), (0,0), (0,0), (0,0))
-                batch_images = np.pad(batch_images, padSz, 'wrap')
-                batch_images = batch_images.astype(np.float32)
-            
-            
-            nRows = np.ceil(batchSz/8)
-            nCols = min(8, batchSz) #8
-            
-            
-            #++++++++ z initialization ++++++++#
-            
-            zhats_init = np.random.uniform(-1, 1, size=(self.batch_size, self.z_dim)).astype(np.float32)
-            zhats_ = zhats_init.copy()
-            kl_div = np.full(len(zhats_), np.inf)
-            in_flat = [rgb2gray(img[:,:self.image_size,:]).flatten() for img in batch_images]
-            in_flat = np.array(in_flat) + 1
-            kld_avg = 0
-            
-            # kld_f = open(os.path.join(config.outDir, 'hats_imgs_{:04d}/kld_init.txt'.format(idx)), 'w')
-            # kld_f.write('average kl divergence of initializations:')
-            for i in xrange(30):
-                G_imgs = self.sess.run([self.G], feed_dict={ self.z: zhats_})
-                # save_images(G_imgs[0][:batchSz,:,:,:], [nRows, nCols],
-                        # os.path.join(config.outDir, 'hats_imgs_{:04d}/init_{:02d}.png'.format(idx, i)))
-                
-                out_flat = [rgb2gray(img[:,:self.image_size,:]).flatten() for img in G_imgs[0]]
-                out_flat = np.array(out_flat) + 1
-                
-                # choose lowest kl divergence
-                for j in xrange(self.batch_size):
-                    kl_d = entropy(in_flat[j], out_flat[j])
-                    if (kl_d < kl_div[j]):
-                        zhats_init[j] = zhats_[j]
-                        kl_div[j] = kl_d
-                
-                kld_avg = kl_div.mean()
-                print('average KL divergence:', kld_avg)
-                # kld_f.write('{:02d}: {:04.4f}'.format(i, kld_avg))
-                
-                zhats_ = np.random.uniform(-1, 1, size=(self.batch_size, self.z_dim)).astype(np.float32)
-            
-            print('choosing min KL divergence:', kld_avg)
-            # kld_f.write('choosing min KL divergence: {:04.4f}'.format(kld_avg))
-            # kld_f.close()
-            
-            G_imgs = self.sess.run([self.G], feed_dict={ self.z: zhats_init})
-            # save_images(G_imgs[0][:batchSz,:,:,:], [nRows, nCols],
-                        # os.path.join(config.outDir, 'hats_imgs_{:04d}/chosen_init.png'.format(idx)))
-            
-            #-------- z initialization --------#
-            
-            
-            #++++++++ completion ++++++++#
-            
-            zhats = zhats_init.copy().astype(np.float32)
-            v = 0
-
-            # save_images(batch_images[:batchSz,:,:,:], [nRows,nCols],
-                        # os.path.join(config.outDir, 'hats_imgs_{:04d}/gt.png'.format(idx)))
-            masked_images = np.multiply(batch_images, batch_mask)
-            # save_images(masked_images[:batchSz,:,:,:], [nRows,nCols],
-                        # os.path.join(config.outDir, 'hats_imgs_{:04d}/masked.png'.format(idx)))
-            
-            for i in xrange(config.nIter):
-                fd = {
-                    self.z: zhats,
-                    self.mask: batch_mask,
-                    self.images: batch_images,
-                }
-                run = [self.complete_loss, self.grad_complete_loss, self.G]
-                loss, g, G_imgs = self.sess.run(run, feed_dict=fd)
-
-                # update zhats
-                v_prev = np.copy(v)
-                v = config.momentum*v - config.lr*g[0]
-                zhats += -config.momentum * v_prev + (1+config.momentum)*v
-                zhats = np.clip(zhats, -1, 1)
-
-                # save images
-                if i % 200 == 0:
-                    print(i, np.mean(loss[0:batchSz]))
-                    # imgName = os.path.join(config.outDir,
-                                        #    'hats_imgs_{:04d}/{:04d}.png'.format(idx, i))
-                    # save_images(G_imgs[:batchSz,:,:,:], [nRows,nCols], imgName)
-
-                    inv_masked_hat_images = np.multiply(G_imgs, 1.0-batch_mask)
-                    completed = masked_images + inv_masked_hat_images
-                    # imgName = os.path.join(config.outDir,
-                                        #    'completed_{:04d}/{:04d}.png'.format(idx, i))
-                    # save_images(completed[:batchSz,:,:,:], [nRows,nCols], imgName)
-                    
-            #-------- completion --------#
-            
-
-            #-------- evaluation --------#
-            fd = {
-                self.images: batch_images,
-                self.G: completed,
-            }
-            run = [self.D_logits_rl, self.D_logits_fk]
-            d_rl, d_fk = self.sess.run(run, feed_dict=fd)
-            va = np.linalg.norm(d_rl-d_fk)
-            print(va)
-            total_val += va
-            va_f.write('{:02d}: {:04.4f}'.format(idx, va))
-        
-        va_f.write('total va: {:04.4f}'.format(total_val))
-        va_f.write('means of va: {:04.4f}'.format(total_val / num_batch))
-        va_f.close()
-
     def discriminator(self, image, reuse=False):
         if reuse:
             tf.get_variable_scope().reuse_variables()
@@ -614,9 +418,6 @@ Initializing a new one.
         tf.get_variable_scope().reuse_variables()
 
         h0 = tf.reshape(linear(z, self.gf_dim*8*4*8, 'g_h0_lin'), [-1, 4, 8, self.gf_dim*8])
-        
-        # h0 = conv2d_transpose(z_, 
-        #     [self.batch_size, 4, 8, self.gf_dim*8], 1, 1, 1, 1, name='g_h0')
         h0 = tf.nn.relu(self.g_bn0(h0, train=False))
 
         h1 = conv2d_transpose(h0, [self.batch_size, 8, 16, self.gf_dim*4], name='g_h1')

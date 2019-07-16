@@ -1,10 +1,6 @@
 # Original Version: Taehoon Kim (http://carpedm20.github.io)
 #   + Source: https://github.com/carpedm20/DCGAN-tensorflow/blob/e30539fb5e20d5a0fed40935853da97e9e55eee8/main.py
 #   + License: MIT
-# [2016-08-05] Modifications for Inpainting: Brandon Amos (http://bamos.github.io)
-#   + License: MIT
-# [2017-07] Modifications for sText2Image: Shangzhe Wu
-#   + License: MIT
 
 import os
 import scipy.misc
@@ -24,8 +20,6 @@ flags.DEFINE_string("dataset", "datasets/celeba/train", "Dataset directory.")
 flags.DEFINE_string("checkpoint_dir", "checkpoint", "Directory name to save the checkpoints [checkpoint]")
 flags.DEFINE_string("sample_dir", "samples", "Directory name to save the image samples [samples]")
 flags.DEFINE_string("log_dir", "logs", "Directory name to save the logs [logs]")
-#flags.DEFINE_float("lam1", 0.1, "Hyperparameter for contextual loss [0.1]")
-#flags.DEFINE_float("lam2", 0.1, "Hyperparameter for perceptual loss [0.1]")
 FLAGS = flags.FLAGS
 
 if not os.path.exists(FLAGS.checkpoint_dir):

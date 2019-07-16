@@ -1,8 +1,3 @@
-# [2016-08-05] Modifications for Completion: Brandon Amos (http://bamos.github.io)
-#   + License: MIT
-# [2017-07] Modifications for sText2Image: Shangzhe Wu
-#   + License: MIT
-
 import argparse
 import os
 import tensorflow as tf
@@ -22,7 +17,6 @@ parser.add_argument('--outDir', type=str, default='results')
 parser.add_argument('--maskType', type=str,
                     choices=['random', 'center', 'left', 'right', 'full'],
                     default='right')
-parser.add_argument('--attributes', nargs='+', type=int, default=[None])
 parser.add_argument('imgs', type=str, nargs='+')
 
 args = parser.parse_args()
