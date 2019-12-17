@@ -8,6 +8,8 @@ I conducted reasearch regarding image generation based on GAN since June 2019, a
 
 As a comprehensive evaluation of our performance in Software Engineering Training course, our task is to reproduce this paper and verify the results on part of the dataset mentioned in the paper. In the meantime, I explored this issue further and choosed it as my final project of Introduction of Data Mining course. As a result, I refactored the code and put the core part of it in my coursework repository.
 
+------
+
 
 
 ## Abstract
@@ -23,6 +25,8 @@ From the comparion above, the Contextual GAN has several benefits:
 1. The simple joint image representation allows for simple and eﬀective learning of joint distribution in the same image-sketch space, which avoids complicated issues in crossdomain learning.
 2. The generated features exhibit more freedom in appearance and do not strictly align with the input features as previous conditional GANs do. 
 3. From the joint image’s point of view, image and sketch are of no diﬀerence, thus exactly the same deep joint image completion network can be used for image-to-sketch generation.
+
+------
 
 
 
@@ -41,6 +45,8 @@ From the comparion above, the Contextual GAN has several benefits:
 6. split the dataset into train and test subsets
 
   ![celeba](Assets/celeba.jpg)
+
+------
 
 
 
@@ -102,6 +108,8 @@ def discriminator(self, image, reuse=False):
         return tf.nn.sigmoid(h4), h4
 ```
 
+------
+
 
 
 ## Train
@@ -115,7 +123,9 @@ First update D network, and then update G network
 | batch size            | 64     |
 | epochs                | 50     |
 
- 
+------
+
+
 
 ## Test
 
@@ -145,6 +155,8 @@ to map the corrupted image A to the latent space (input z is updated while the G
 | momentum        | 0.9   |
 | iterations      | 1000  |
 | learning rate   | 0.01  |
+
+------
 
 
 
@@ -184,7 +196,7 @@ Comparison with pix2pix on ugly hand-drawn sketches (second row is pix2pix, thir
 
 ![handdraw](results/handdraw.png)
 
-
+------
 
 
 
@@ -198,6 +210,8 @@ Both SSIM (Structural Similarity Metric) and PSNR (Peak signal-to-noise ratio) a
 | ---------------- | ---------- | --------- |
 | pix2pix          | 0.85480366 | 8.992791  |
 | Contextual   GAN | 0.60475737 | 14.746771 |
+
+------
 
 
 
@@ -238,11 +252,15 @@ tensorboard --logdir=logs_face --port=8888
 
 ![g_loss](Assets/g_loss.png)
 
+------
+
 
 
 ## Acknowledgement
 
 Codes are based on [DCGAN](https://github.com/carpedm20/DCGAN-tensorflow) and [dcgan-completion](https://github.com/bamos/dcgan-completion.tensorflow).
+
+------
 
 
 
